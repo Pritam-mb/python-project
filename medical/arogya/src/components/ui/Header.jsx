@@ -29,6 +29,14 @@ export default function Header() {
                                     about
                                 </NavLink>
                             </li>
+                            <li>
+                                <NavLink
+                                to="/hospital"
+                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                                >
+                                    emergency
+                                </NavLink>
+                            </li>
                              {/* <li>
                                 <NavLink
                                 to="/contact"

@@ -8,12 +8,14 @@ import Dashboard from './pages/Dashboard.jsx'
 // import App from './App.jsx'
 import { Route, RouterProvider, createBrowserRouter, createRoutesFromElements } from 'react-router-dom'
 import Chatbot from './pages/Chatbot.jsx'
+import Emergency from './pages/Emergency.jsx'
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path='/' element={<App />}>
       <Route path='' element={<Dashboard />} />
       <Route path='chatbot' element={<Chatbot/>} />
+      <Route path='hospital' element={<Emergency/>} />
       {/* <Route path='about' element={<About />} />
       <Route path='contact' element={<Contact />} />
       <Route path='user/:userid' element={<User />} />
