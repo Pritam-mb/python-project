@@ -1,103 +1,122 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
+// import hospitals from "../data/hospitals.json"; // pre-converted JSON
+import hospitals from "../data/datafile.json";
 
-// Reusable Card Component
 function HospitalCard({ hospital }) {
   return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: "12px",
-        padding: "20px",
-        marginBottom: "15px",
-        backgroundColor: "#f5f8ff",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        transition: "transform 0.2s",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-    >
-      <h2 style={{ color: "#1e40af", marginBottom: "5px" }}>{hospital.name}</h2>
-      <p><strong>City:</strong> {hospital.city}</p>
-      <p><strong>Latitude:</strong> {hospital.lat}</p>
-      <p><strong>Longitude:</strong> {hospital.lon}</p>
+    <div className="border p-4 rounded-lg shadow-md bg-white mb-4">
+      <h2 className="text-xl font-bold mb-2">{hospital.Hospital_Name}</h2>
+      <p>{hospital.Address_Original_First_Line}</p>
+      <p>District: {hospital.District}</p>
+      <p>Emergency: {hospital.Emergency_Num || "N/A"}</p>
     </div>
   );
 }
 
-function Emergency() {
+export default function Emergency() {
   const [city, setCity] = useState("");
-  const [filteredHospitals, setFilteredHospitals] = useState([]);
+  const [hospitalData, setHospitalData] = useState([]);
+ 
+  const [userLocation, setUserLocation] = useState({ lat: null, lon: null, error: null });
 
-  const hospitals = [
-    { id: 1, name: "City Hospital", city: "howrah", lat: 22.5726, lon: 88.3639 },
-    { id: 2, name: "Green Valley Clinic", city: "kolkata", lat: 22.58, lon: 88.37 },
-    { id: 3, name: "Health Plus Hospital", city: "hoogly", lat: 22.6, lon: 88.4 },
-  ];
+  // Get user's live location
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setUserLocation((prev) => ({ ...prev, error: "Geolocation not supported" }));
+      return;
+    }
 
-  const handleSubmit = () => {
-    const results = hospitals.filter(
-      (hospital) => hospital.city.toLowerCase() === city.toLowerCase()
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          error: null,
+        });
+      },
+      (error) => {
+        setUserLocation((prev) => ({ ...prev, error: error.message }));
+      },
+      { enableHighAccuracy: true }
     );
-    setFilteredHospitals(results);
+  }, []);
+
+  const search = () => {
+    let filter = hospitals;
+    if(city.trim() != ""){
+    const filterData = hospitals.filter(
+      (hospital) =>
+        hospital.District &&
+        hospital.District.trim().toLowerCase() === city.toLowerCase()
+    );
+    setHospitalData(filterData);
   };
+  if(userLocation.lat && userLocation.lon){
+    const newdata = hospitals.map(hospital =>{
+      const hlat = parseFloat(hospital.googlemapcorridinate_lati);
+      const hlon = parseFloat(hospital.googlemapcorridinate_longi);
+      if(!hlat || !hlon){
+        return {
+          ...hospital, distance: null
+        };}
+        const distance =getdistance(hlat,hlon,userLocation.lat,userLocation.lon);
+        return {
+          ...hospital, distance
+        };
+      });
+    newdata.sort((a,b) => {
+      if(a.distance === null) return 1;
+      if(b.distance === null) return -1;
+      return a.distance - b.distance;
+    });
+   filter= newdata.filter(hospital => hospital.distance !== null && hospital.distance <= 30);
+      // const [lat, lon] = hospital.Lat_Lon ? hospital.Lat_Lon.split(",").map(Number) : [null, null];
+  }
+   setHospitalData(filter);
+}
 
   return (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "40px 20px",
-        fontFamily: "Arial, sans-serif",
-        backgroundColor: "#e0e7ff",
-        minHeight: "100vh",
-      }}
-    >
-      <h1 style={{ color: "#1e3a8a", marginBottom: "25px" }}>🚑 Emergency Hospital Finder</h1>
-
-      <div style={{ marginBottom: "30px" }}>
+    <div className="p-4">
+      <div className="flex mb-4 gap-2">
         <input
           type="text"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          placeholder="Enter City Name"
-          style={{
-            padding: "12px",
-            width: "250px",
-            borderRadius: "8px",
-            border: "1px solid #94a3b8",
-            marginRight: "10px",
-            outline: "none",
-          }}
+          placeholder="Enter city name"
+          className="border p-2 rounded w-full"
         />
+        {/* <input type="text"
+        value={} /> */}
         <button
-          onClick={handleSubmit}
-          style={{
-            padding: "12px 25px",
-            borderRadius: "8px",
-            backgroundColor: "#1e40af",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
+          onClick={search}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Search
         </button>
       </div>
 
-      <div style={{ maxWidth: "500px", margin: "0 auto" }}>
-        {filteredHospitals.length > 0 ? (
-          filteredHospitals.map((hospital) => (
-            <HospitalCard key={hospital.id} hospital={hospital} />
+      <div>
+        {hospitalData.length > 0 ? (
+          hospitalData.map((hospital, index) => (
+            <HospitalCard key={index} hospital={hospital} />
           ))
         ) : (
-          <p style={{ color: "#334155" }}>
-            No hospitals found. Try entering "howrah", "kolkata", or "hoogly".
-          </p>
+          <p>No hospitals found.</p>
         )}
       </div>
     </div>
   );
 }
-
-export default Emergency;
+function getdistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
