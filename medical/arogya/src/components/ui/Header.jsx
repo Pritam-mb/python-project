@@ -26,7 +26,7 @@ export default function Header() {
                                 to="/chatbot"
                                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                 >
-                                    about
+                                    chat with us
                                 </NavLink>
                             </li>
                             <li>

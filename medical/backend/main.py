@@ -19,7 +19,9 @@ app = FastAPI()
 # CORS configuration: allow frontend to access backend
 origins = [
     "http://localhost:5173",  # Vite frontend
-    "http://127.0.0.1:5173"
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+        "http://127.0.0.1:3000"
 ]
 
 app.add_middleware(
@@ -27,7 +29,9 @@ app.add_middleware(
     allow_origins=origins,       # allow these origins
     allow_credentials=True,
     allow_methods=["*"],         # allow all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],         # allow all headers
+    allow_headers=["*"],  
+    # allow_origins=["*"],
+# allow all headers
 )
 
 # Request body schema
